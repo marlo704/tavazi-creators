@@ -18,7 +18,7 @@ const DemoBanner = forwardRef<HTMLDivElement>(function DemoBanner(_props, ref) {
         Demo view &mdash; sample data only. Sign in to see your real earnings.
       </span>
       <a
-        href="https://tavazi.tv/creators"
+        href="https://creators.tavazi.tv"
         target="_blank"
         rel="noopener noreferrer"
         className="w-full text-center md:w-auto md:mt-0 shrink-0 hover:opacity-90 transition-opacity"
