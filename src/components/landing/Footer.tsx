@@ -5,7 +5,8 @@ export default function Footer() {
         <img
           src="/assets/tavazi-logo.png"
           alt="Tavazi"
-          className="h-[100px] object-contain mx-auto mb-4"
+          className="mx-auto mb-4"
+          style={{ height: '160px', width: 'auto', objectFit: 'contain' }}
         />
         <p className="text-cream/50 text-sm mb-8 font-display italic">
           From Africa. By Africans. For the World.

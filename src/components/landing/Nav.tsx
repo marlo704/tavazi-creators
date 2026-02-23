@@ -5,8 +5,9 @@ export default function Nav() {
   const { user } = useAuthStore();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 min-h-[120px] flex items-center justify-between px-6 md:px-10"
+    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10"
       style={{
+        overflow: 'visible',
         background: 'rgba(13,13,13,0.8)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
@@ -17,7 +18,7 @@ export default function Nav() {
         <img
           src="/assets/tavazi-logo.png"
           alt="Tavazi"
-          className="h-[120px] object-contain"
+          style={{ height: '200px', width: 'auto', objectFit: 'contain', marginTop: '-70px', marginBottom: '-70px' }}
         />
       </a>
 
