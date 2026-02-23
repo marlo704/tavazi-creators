@@ -5,7 +5,7 @@ export default function Footer() {
         <img
           src="/assets/tavazi-logo.png"
           alt="Tavazi"
-          className="h-[40px] mx-auto mb-4"
+          className="h-[100px] object-contain mx-auto mb-4"
         />
         <p className="text-cream/50 text-sm mb-8 font-display italic">
           From Africa. By Africans. For the World.
