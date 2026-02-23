@@ -1,36 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Users, Film, DollarSign, TrendingUp } from 'lucide-react';
-import { creators, titles, monthlyMetrics, formatKES } from '../../lib/mockData';
+import { useAllCreators, useTitlesCount, usePlatformStats } from '../../hooks/useCreatorData';
+import { formatKES } from '../../lib/mockData';
 import ImportCSVTab from '../../components/admin/ImportCSVTab';
 import SVODPoolTab from '../../components/admin/SVODPoolTab';
 import CreatorManagementTab from '../../components/admin/CreatorManagementTab';
-
-const stats = [
-  {
-    label: 'Total Creators',
-    value: creators.length.toString(),
-    icon: Users,
-    color: '#1971C2',
-  },
-  {
-    label: 'Total Titles',
-    value: titles.length.toString(),
-    icon: Film,
-    color: '#D4A853',
-  },
-  {
-    label: 'Platform Revenue',
-    value: formatKES(monthlyMetrics.reduce((s, m) => s + m.platform_fee, 0)),
-    icon: DollarSign,
-    color: '#22C55E',
-  },
-  {
-    label: 'Total Streams',
-    value: titles.reduce((s, t) => s + t.total_streams, 0).toLocaleString(),
-    icon: TrendingUp,
-    color: '#1971C2',
-  },
-];
 
 const tabs = [
   { id: 'import', label: 'Import Analytics' },
@@ -42,6 +16,37 @@ type TabId = (typeof tabs)[number]['id'];
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<TabId>('import');
+
+  const { data: allCreators = [] } = useAllCreators();
+  const { data: titlesCount = 0 } = useTitlesCount();
+  const { data: platformStats } = usePlatformStats();
+
+  const stats = useMemo(() => [
+    {
+      label: 'Total Creators',
+      value: allCreators.length.toString(),
+      icon: Users,
+      color: '#1971C2',
+    },
+    {
+      label: 'Total Titles',
+      value: titlesCount.toString(),
+      icon: Film,
+      color: '#D4A853',
+    },
+    {
+      label: 'Platform Revenue',
+      value: formatKES(platformStats?.platformRevenue ?? 0),
+      icon: DollarSign,
+      color: '#22C55E',
+    },
+    {
+      label: 'Total Streams',
+      value: (platformStats?.totalStreams ?? 0).toLocaleString(),
+      icon: TrendingUp,
+      color: '#1971C2',
+    },
+  ], [allCreators.length, titlesCount, platformStats]);
 
   return (
     <div>

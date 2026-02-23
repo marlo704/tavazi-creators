@@ -1,30 +1,53 @@
 import { useMemo } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import EmptyState from '../../components/dashboard/EmptyState';
+import { useIsDemo } from '../../contexts/DemoContext';
+import { useAuthStore } from '../../stores/authStore';
+import { useMonthlyAnalyticsRange, usePPVTransactions, useSVODPool } from '../../hooks/useCreatorData';
 import {
   getCurrentCreator,
   getMetricsByCreator,
-  getSVODPoolByMonth,
-  getPPVByCreatorMonth,
+  getSVODPoolByMonth as getMockSVODPool,
+  getPPVByCreatorMonth as getMockPPV,
   formatKES,
 } from '../../lib/mockData';
 import { calcAttribution, calcGrossSVOD, calcCreatorPayout, calcPlatformFee } from '../../lib/calculations';
 
 export default function RevenuePage() {
-  const creator = getCurrentCreator();
-  const metrics = getMetricsByCreator(creator.id);
-  const latestMonth = metrics[metrics.length - 1]?.report_month ?? '2025-01';
-  const latestMetric = metrics[metrics.length - 1];
+  const isDemo = useIsDemo();
+  const { creatorProfile } = useAuthStore();
+  const { selectedMonth } = useOutletContext<{ selectedMonth: string }>();
 
-  const svodPool = getSVODPoolByMonth(latestMonth);
-  const ppvItems = getPPVByCreatorMonth(creator.id, latestMonth);
+  const liveCreatorId = isDemo ? undefined : creatorProfile?.id;
+  const { data: liveMetrics = [] } = useMonthlyAnalyticsRange(liveCreatorId);
+  const latestLiveMonth = liveMetrics.length > 0 ? liveMetrics[liveMetrics.length - 1].report_month : selectedMonth;
+
+  const effectiveMonth = isDemo
+    ? (getMetricsByCreator(getCurrentCreator().id).slice(-1)[0]?.report_month ?? '2025-01')
+    : latestLiveMonth;
+
+  const { data: liveSVODPool } = useSVODPool(isDemo ? '' : effectiveMonth);
+  const { data: livePPV = [] } = usePPVTransactions(liveCreatorId, isDemo ? '' : effectiveMonth);
+
+  const demoCreator = isDemo ? getCurrentCreator() : null;
+  const demoMetrics = isDemo ? getMetricsByCreator(demoCreator!.id) : null;
+  const demoLatestMetric = isDemo ? demoMetrics![demoMetrics!.length - 1] : null;
+  const demoSVODPool = isDemo ? getMockSVODPool(effectiveMonth) : null;
+  const demoPPV = isDemo ? getMockPPV(demoCreator!.id, effectiveMonth) : null;
+
+  const creator = isDemo ? demoCreator! : creatorProfile!;
+  const latestMetric = isDemo ? demoLatestMetric : (liveMetrics.length > 0 ? liveMetrics[liveMetrics.length - 1] : null);
+  const svodPool = isDemo ? demoSVODPool : liveSVODPool;
+  const ppvItems = isDemo ? demoPPV! : livePPV;
 
   const revenue = useMemo(() => {
     const creatorStreams = latestMetric?.total_streams ?? 0;
     const platformStreams = svodPool?.platform_total_streams ?? 0;
-    const pool = svodPool?.total_pool ?? 0;
+    const pool = svodPool?.total_pool ? Number(svodPool.total_pool) : 0;
 
     const attribution = calcAttribution(creatorStreams, platformStreams);
     const grossSVOD = calcGrossSVOD(pool, attribution);
-    const totalPPV = ppvItems.reduce((s, p) => s + p.gross, 0);
+    const totalPPV = ppvItems.reduce((s: number, p: { gross: number }) => s + Number(p.gross), 0);
     const grossTotal = grossSVOD + totalPPV;
     const share = creator.revenue_share;
     const payout = calcCreatorPayout(grossTotal, share);
@@ -44,7 +67,19 @@ export default function RevenuePage() {
     };
   }, [latestMetric, svodPool, ppvItems, creator.revenue_share]);
 
-  const monthLabel = new Date(latestMonth + '-01').toLocaleString('default', { month: 'long', year: 'numeric' });
+  if (!isDemo && !latestMetric) {
+    return (
+      <div>
+        <h1 className="font-display text-2xl text-cream mb-6">Revenue &amp; Payouts</h1>
+        <EmptyState
+          heading="No revenue data yet"
+          body="Revenue details will appear here once analytics have been imported for your content."
+        />
+      </div>
+    );
+  }
+
+  const monthLabel = new Date(effectiveMonth + '-01').toLocaleString('default', { month: 'long', year: 'numeric' });
   const sharePercent = Math.round(creator.revenue_share * 100);
   const feePercent = 100 - sharePercent;
 
@@ -110,12 +145,12 @@ export default function RevenuePage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {ppvItems.map((p) => (
+                    {ppvItems.map((p: { id: string; titles?: { title: string }; units_sold: number; price_kes: number; gross: number }) => (
                       <tr key={p.id} className="border-b border-tavazi-navy/5">
                         <td className="py-3 px-3 text-sm text-cream">{p.titles?.title ?? 'Unknown'}</td>
                         <td className="py-3 px-3 text-right text-sm text-cream/70 tabular-nums">{p.units_sold}</td>
-                        <td className="py-3 px-3 text-right text-sm text-cream/70 tabular-nums">{p.price_kes.toLocaleString()}</td>
-                        <td className="py-3 px-3 text-right text-sm font-semibold text-gold-accent tabular-nums">{formatKES(p.gross)}</td>
+                        <td className="py-3 px-3 text-right text-sm text-cream/70 tabular-nums">{Number(p.price_kes).toLocaleString()}</td>
+                        <td className="py-3 px-3 text-right text-sm font-semibold text-gold-accent tabular-nums">{formatKES(Number(p.gross))}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -158,7 +193,7 @@ export default function RevenuePage() {
           Payment via M-Pesa or bank transfer within 15 business days.
         </p>
         <p className="text-sm text-cream/40 mt-1">
-          Reference: <span className="font-mono text-cream/60">TAV-{creator.id.toUpperCase()}-{latestMonth.replace('-', '')}</span>
+          Reference: <span className="font-mono text-cream/60">TAV-{creator.id.slice(0, 8).toUpperCase()}-{effectiveMonth.replace('-', '')}</span>
         </p>
       </div>
     </div>

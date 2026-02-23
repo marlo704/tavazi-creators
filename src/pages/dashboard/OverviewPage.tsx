@@ -1,7 +1,11 @@
+import { useMemo } from 'react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download, Upload } from 'lucide-react';
 import KPICard from '../../components/dashboard/KPICard';
+import EmptyState from '../../components/dashboard/EmptyState';
 import { useIsDemo } from '../../contexts/DemoContext';
+import { useAuthStore } from '../../stores/authStore';
+import { useCreatorTitles, useMonthlyAnalyticsRange } from '../../hooks/useCreatorData';
 import {
   getCurrentCreator,
   getCreatorKPIs,
@@ -27,25 +31,95 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 
 export default function OverviewPage() {
   const isDemo = useIsDemo();
-  const creator = getCurrentCreator();
-  const kpis = getCreatorKPIs(creator.id);
-  const metrics = getMetricsByCreator(creator.id);
-  const titles = getTitlesByCreator(creator.id).filter((t) => t.status === 'published');
+  const { creatorProfile } = useAuthStore();
 
-  const chartData = metrics.slice(-6).map((m) => ({
+  const liveCreatorId = isDemo ? undefined : creatorProfile?.id;
+  const { data: liveTitles = [] } = useCreatorTitles(liveCreatorId);
+  const { data: liveMetrics = [] } = useMonthlyAnalyticsRange(liveCreatorId);
+
+  const demoCreator = isDemo ? getCurrentCreator() : null;
+  const demoKpis = isDemo ? getCreatorKPIs(demoCreator!.id) : null;
+  const demoMetrics = isDemo ? getMetricsByCreator(demoCreator!.id) : null;
+  const demoTitles = isDemo ? getTitlesByCreator(demoCreator!.id).filter((t) => t.status === 'published') : null;
+
+  const livePublishedTitles = useMemo(
+    () => (isDemo ? [] : liveTitles.filter((t: { status: string }) => t.status === 'published')),
+    [isDemo, liveTitles]
+  );
+
+  const liveKpis = useMemo(() => {
+    if (isDemo) return null;
+    const totalStreams = livePublishedTitles.reduce((s: number, t: { total_streams: number }) => s + t.total_streams, 0);
+    const uniqueViewers = livePublishedTitles.reduce((s: number, t: { unique_viewers: number }) => s + t.unique_viewers, 0);
+    const watchHours = livePublishedTitles.reduce((s: number, t: { watch_hours: number }) => s + Number(t.watch_hours), 0);
+    const activeTitles = livePublishedTitles.filter((t: { avg_completion: number }) => t.avg_completion > 0);
+    const avgCompletion = activeTitles.length > 0
+      ? Math.round(activeTitles.reduce((s: number, t: { avg_completion: number }) => s + Number(t.avg_completion), 0) / activeTitles.length)
+      : 0;
+
+    const latest = liveMetrics[liveMetrics.length - 1];
+    const previous = liveMetrics[liveMetrics.length - 2];
+    const grossRevenue = latest?.gross_revenue ? Number(latest.gross_revenue) : 0;
+    const platformFee = latest?.platform_fee ? Number(latest.platform_fee) : 0;
+    const creatorPayout = latest?.creator_payout ? Number(latest.creator_payout) : 0;
+    const streamsTrend = previous && latest
+      ? Math.round(((latest.total_streams - previous.total_streams) / (previous.total_streams || 1)) * 100)
+      : 0;
+    const revenueTrend = previous && latest
+      ? Math.round(((Number(latest.gross_revenue) - Number(previous.gross_revenue)) / (Number(previous.gross_revenue) || 1)) * 100)
+      : 0;
+
+    return {
+      totalStreams, uniqueViewers, watchHours, avgCompletion,
+      grossRevenue, platformFee, creatorPayout,
+      streamsTrend, revenueTrend,
+      titleCount: livePublishedTitles.length,
+    };
+  }, [isDemo, livePublishedTitles, liveMetrics]);
+
+  const creator = isDemo ? demoCreator! : creatorProfile!;
+  const kpis = isDemo ? demoKpis! : liveKpis!;
+  const metrics = isDemo ? demoMetrics! : liveMetrics;
+  const titles = isDemo ? demoTitles! : livePublishedTitles;
+
+  const hasData = titles.length > 0 || metrics.length > 0;
+
+  const chartData = metrics.slice(-6).map((m: { report_month: string; gross_revenue: number; creator_payout: number }) => ({
     month: new Date(m.report_month + '-01').toLocaleString('default', { month: 'short' }),
-    gross: m.gross_revenue,
-    payout: m.creator_payout,
+    gross: Number(m.gross_revenue),
+    payout: Number(m.creator_payout),
   }));
 
   const topTitles = [...titles]
-    .sort((a, b) => b.total_streams - a.total_streams)
+    .sort((a: { total_streams: number }, b: { total_streams: number }) => b.total_streams - a.total_streams)
     .slice(0, 4)
-    .map((t, i) => ({
+    .map((t: { title: string; total_streams: number }, i: number) => ({
       name: t.title.length > 20 ? t.title.slice(0, 20) + '...' : t.title,
       streams: t.total_streams,
       fill: i === 0 ? '#D4A853' : '#1971C2',
     }));
+
+  if (!isDemo && !hasData) {
+    return (
+      <div>
+        <div className="flex items-center gap-4 mb-8">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center font-display text-xl text-tavazi-dark shrink-0"
+            style={{ background: 'linear-gradient(135deg, #D4A853, #C49B48)' }}
+          >
+            {creator?.avatar_initials}
+          </div>
+          <div>
+            <h1 className="font-display text-[22px] text-cream">{creator?.name}</h1>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-tavazi-navy font-semibold">Revenue Share: {Math.round((creator?.revenue_share ?? 0) * 100)}%</span>
+            </div>
+          </div>
+        </div>
+        <EmptyState />
+      </div>
+    );
+  }
 
   return (
     <div>

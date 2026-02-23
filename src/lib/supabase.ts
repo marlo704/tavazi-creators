@@ -76,3 +76,22 @@ export async function getAllCreators() {
     .order('name');
   return { data: data ?? [], error };
 }
+
+export async function getAllTitlesCount() {
+  const { count, error } = await supabase
+    .from('titles')
+    .select('*', { count: 'exact', head: true });
+  return { count: count ?? 0, error };
+}
+
+export async function getPlatformStats() {
+  const { data: analytics, error: analyticsError } = await supabase
+    .from('monthly_analytics')
+    .select('platform_fee, total_streams');
+  if (analyticsError) return { data: null, error: analyticsError };
+
+  const platformRevenue = (analytics ?? []).reduce((s, m) => s + Number(m.platform_fee ?? 0), 0);
+  const totalStreams = (analytics ?? []).reduce((s, m) => s + Number(m.total_streams ?? 0), 0);
+
+  return { data: { platformRevenue, totalStreams }, error: null };
+}

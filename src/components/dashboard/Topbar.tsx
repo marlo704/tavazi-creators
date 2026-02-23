@@ -2,6 +2,7 @@ import { LogOut, FileText, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useIsDemo } from '../../contexts/DemoContext';
+import { useAuthStore } from '../../stores/authStore';
 import {
   getCurrentCreator,
   getTitlesByCreator,
@@ -31,10 +32,14 @@ function getMonthOptions() {
 export default function Topbar({ selectedMonth, onMonthChange }: TopbarProps) {
   const { signOut } = useAuth();
   const isDemo = useIsDemo();
-  const creator = getCurrentCreator();
+  const { creatorProfile } = useAuthStore();
   const months = getMonthOptions();
 
+  const displayName = isDemo ? 'Demo Mode' : (creatorProfile?.name ?? '');
+  const displayInitials = isDemo ? '' : (creatorProfile?.avatar_initials ?? '');
+
   const handleExport = () => {
+    const creator = getCurrentCreator();
     const titles = getTitlesByCreator(creator.id);
     const metrics = getMetricsByCreator(creator.id);
     const latestMonth = metrics[metrics.length - 1]?.report_month ?? selectedMonth;
@@ -94,9 +99,9 @@ export default function Topbar({ selectedMonth, onMonthChange }: TopbarProps) {
               className="w-8 h-8 rounded-full flex items-center justify-center font-display text-xs text-tavazi-dark shrink-0"
               style={{ background: 'linear-gradient(135deg, #D4A853, #C49B48)' }}
             >
-              {creator.avatar_initials}
+              {displayInitials}
             </div>
-            <span className="hidden md:block text-sm text-cream font-medium">{creator.name}</span>
+            <span className="hidden md:block text-sm text-cream font-medium">{displayName}</span>
           </div>
         )}
         {isDemo ? (

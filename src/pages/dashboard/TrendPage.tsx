@@ -1,12 +1,10 @@
+import { useMemo } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import EmptyState from '../../components/dashboard/EmptyState';
+import { useIsDemo } from '../../contexts/DemoContext';
+import { useAuthStore } from '../../stores/authStore';
+import { useMonthlyAnalyticsRange } from '../../hooks/useCreatorData';
 import { getCurrentCreator, getMetricsByCreator, formatKES, formatNumber } from '../../lib/mockData';
-
-const tooltipStyle = {
-  background: '#112640',
-  border: '1px solid rgba(25,113,194,0.2)',
-  borderRadius: '8px',
-  color: '#F5F0E6',
-};
 
 const CustomTooltip = ({
   active,
@@ -53,16 +51,37 @@ const RevenueTooltip = ({
 };
 
 export default function TrendPage() {
-  const creator = getCurrentCreator();
-  const metrics = getMetricsByCreator(creator.id);
+  const isDemo = useIsDemo();
+  const { creatorProfile } = useAuthStore();
 
-  const trendData = metrics.map((m) => ({
-    month: new Date(m.report_month + '-01').toLocaleString('default', { month: 'short', year: '2-digit' }),
-    streams: m.total_streams,
-    viewers: m.unique_viewers,
-    revenue: m.gross_revenue,
-    payout: m.creator_payout,
-  }));
+  const liveCreatorId = isDemo ? undefined : creatorProfile?.id;
+  const { data: liveMetrics = [] } = useMonthlyAnalyticsRange(liveCreatorId);
+
+  const demoMetrics = isDemo ? getMetricsByCreator(getCurrentCreator().id) : null;
+
+  const metrics = isDemo ? demoMetrics! : liveMetrics;
+
+  const trendData = useMemo(() =>
+    metrics.map((m) => ({
+      month: new Date(m.report_month + '-01').toLocaleString('default', { month: 'short', year: '2-digit' }),
+      streams: m.total_streams,
+      viewers: m.unique_viewers,
+      revenue: m.gross_revenue,
+      payout: m.creator_payout,
+    })),
+  [metrics]);
+
+  if (!isDemo && metrics.length === 0) {
+    return (
+      <div>
+        <h1 className="font-display text-2xl text-cream mb-6">12-Month Trends</h1>
+        <EmptyState
+          heading="No trend data yet"
+          body="Trend charts will appear here once multiple months of analytics have been imported."
+        />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -124,10 +143,7 @@ export default function TrendPage() {
                   return `KES ${(v / 1000).toFixed(0)}K`;
                 }}
               />
-              <Tooltip
-                content={<RevenueTooltip />}
-                contentStyle={tooltipStyle}
-              />
+              <Tooltip content={<RevenueTooltip />} />
               <Legend wrapperStyle={{ color: 'rgba(245,240,230,0.6)', fontSize: '12px' }} />
               <Line
                 type="monotone"

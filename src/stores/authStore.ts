@@ -1,17 +1,19 @@
 import { create } from 'zustand';
 import type { User, Session } from '@supabase/supabase-js';
-import type { Creator } from '../lib/mockData';
+import type { CreatorProfile } from '../lib/types';
 
 interface AuthState {
   user: User | null;
   session: Session | null;
-  creatorProfile: Creator | null;
+  creatorProfile: CreatorProfile | null;
   isAdmin: boolean;
   loading: boolean;
+  profileError: string | null;
   setUser: (user: User | null) => void;
   setSession: (session: Session | null) => void;
-  setCreatorProfile: (profile: Creator | null) => void;
+  setCreatorProfile: (profile: CreatorProfile | null) => void;
   setLoading: (loading: boolean) => void;
+  setProfileError: (error: string | null) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -20,9 +22,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   creatorProfile: null,
   isAdmin: false,
   loading: true,
+  profileError: null,
   setUser: (user) => set({ user }),
   setSession: (session) => set({ session }),
   setCreatorProfile: (profile) =>
-    set({ creatorProfile: profile, isAdmin: profile?.role === 'admin' }),
+    set({ creatorProfile: profile, isAdmin: profile?.role === 'admin', profileError: null }),
   setLoading: (loading) => set({ loading }),
+  setProfileError: (error) => set({ profileError: error }),
 }));

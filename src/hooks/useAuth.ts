@@ -1,9 +1,13 @@
 import { useEffect } from 'react';
 import { supabase, getCreatorProfile } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
+import type { CreatorProfile } from '../lib/types';
 
 export function useAuth() {
-  const { user, session, loading, creatorProfile, isAdmin, setUser, setSession, setCreatorProfile, setLoading } = useAuthStore();
+  const {
+    user, session, loading, creatorProfile, isAdmin, profileError,
+    setUser, setSession, setCreatorProfile, setLoading, setProfileError,
+  } = useAuthStore();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -26,16 +30,25 @@ export function useAuth() {
         })();
       } else {
         setCreatorProfile(null);
+        setProfileError(null);
         setLoading(false);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [setUser, setSession, setCreatorProfile, setLoading]);
+  }, [setUser, setSession, setCreatorProfile, setLoading, setProfileError]);
 
   async function fetchProfile(userId: string) {
-    const { data } = await getCreatorProfile(userId);
-    setCreatorProfile(data as import('../lib/mockData').Creator | null);
+    const { data, error } = await getCreatorProfile(userId);
+    if (error) {
+      setProfileError('Failed to load profile. Please try again.');
+      setCreatorProfile(null);
+    } else if (!data) {
+      setProfileError('Account not configured. Contact your administrator.');
+      setCreatorProfile(null);
+    } else {
+      setCreatorProfile(data as CreatorProfile);
+    }
     setLoading(false);
   }
 
@@ -47,6 +60,7 @@ export function useAuth() {
   const signOut = async () => {
     await supabase.auth.signOut();
     setCreatorProfile(null);
+    setProfileError(null);
   };
 
   const resetPassword = async (email: string) => {
@@ -54,5 +68,5 @@ export function useAuth() {
     return { error };
   };
 
-  return { user, session, loading, creatorProfile, isAdmin, signIn, signOut, resetPassword };
+  return { user, session, loading, creatorProfile, isAdmin, profileError, signIn, signOut, resetPassword };
 }

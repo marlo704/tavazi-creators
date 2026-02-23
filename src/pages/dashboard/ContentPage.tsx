@@ -1,6 +1,10 @@
 import { useState, useMemo } from 'react';
 import { ChevronUp, ChevronDown, Film, Clapperboard, Tv, Video, Radio } from 'lucide-react';
-import { getCurrentCreator, getTitlesByCreator, formatNumber, type Title } from '../../lib/mockData';
+import EmptyState from '../../components/dashboard/EmptyState';
+import { useIsDemo } from '../../contexts/DemoContext';
+import { useAuthStore } from '../../stores/authStore';
+import { useCreatorTitles } from '../../hooks/useCreatorData';
+import { getCurrentCreator, getTitlesByCreator, formatNumber } from '../../lib/mockData';
 
 const typeIcons: Record<string, typeof Film> = {
   movie: Film,
@@ -32,6 +36,22 @@ const monetisationStyles: Record<string, string> = {
 type SortKey = 'title' | 'type' | 'status' | 'total_streams' | 'unique_viewers' | 'watch_hours' | 'avg_completion' | 'gross_revenue';
 type SortDir = 'asc' | 'desc';
 
+interface TitleLike {
+  id: string;
+  title: string;
+  category: string;
+  type: string;
+  status: string;
+  monetisation: string;
+  thumbnail_url: string;
+  total_streams: number;
+  unique_viewers: number;
+  watch_hours: number;
+  avg_completion: number;
+  gross_revenue: number;
+  [key: string]: unknown;
+}
+
 function CompletionBar({ value }: { value: number }) {
   const color = value >= 75 ? '#22C55E' : value >= 50 ? '#D4A853' : '#EF4444';
   return (
@@ -45,8 +65,15 @@ function CompletionBar({ value }: { value: number }) {
 }
 
 export default function ContentPage() {
-  const creator = getCurrentCreator();
-  const allTitles = getTitlesByCreator(creator.id);
+  const isDemo = useIsDemo();
+  const { creatorProfile } = useAuthStore();
+
+  const liveCreatorId = isDemo ? undefined : creatorProfile?.id;
+  const { data: liveTitles = [] } = useCreatorTitles(liveCreatorId);
+
+  const allTitles: TitleLike[] = isDemo
+    ? getTitlesByCreator(getCurrentCreator().id)
+    : liveTitles;
 
   const [sortKey, setSortKey] = useState<SortKey>('total_streams');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -83,9 +110,13 @@ export default function ContentPage() {
   const totals = useMemo(() => ({
     streams: filtered.reduce((s, t) => s + t.total_streams, 0),
     viewers: filtered.reduce((s, t) => s + t.unique_viewers, 0),
-    watchHrs: filtered.reduce((s, t) => s + t.watch_hours, 0),
-    revenue: filtered.reduce((s, t) => s + t.gross_revenue, 0),
+    watchHrs: filtered.reduce((s, t) => s + Number(t.watch_hours), 0),
+    revenue: filtered.reduce((s, t) => s + Number(t.gross_revenue), 0),
   }), [filtered]);
+
+  if (!isDemo && allTitles.length === 0) {
+    return <EmptyState />;
+  }
 
   const SortIcon = ({ col }: { col: SortKey }) => {
     if (sortKey !== col) return <ChevronDown className="w-3 h-3 opacity-30" />;
@@ -151,13 +182,17 @@ export default function ContentPage() {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((t: Title, i: number) => {
+            {sorted.map((t, i) => {
               const TypeIcon = typeIcons[t.type] || Film;
               return (
                 <tr key={t.id} className={`border-b border-tavazi-navy/5 hover:bg-tavazi-navy/5 transition-colors ${i % 2 === 0 ? '' : 'bg-tavazi-slate/10'}`}>
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
-                      <img src={t.thumbnail_url} alt={t.title} className="w-14 h-8 object-cover rounded shrink-0" />
+                      {t.thumbnail_url ? (
+                        <img src={t.thumbnail_url} alt={t.title} className="w-14 h-8 object-cover rounded shrink-0" />
+                      ) : (
+                        <div className="w-14 h-8 rounded bg-tavazi-slate shrink-0" />
+                      )}
                       <div>
                         <span className="text-sm font-semibold text-cream block leading-tight">{t.title}</span>
                         <span className="text-[11px] text-cream/40">{t.category}</span>
@@ -167,20 +202,20 @@ export default function ContentPage() {
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-1.5 text-cream/60 text-sm">
                       <TypeIcon className="w-3.5 h-3.5" />
-                      {typeLabels[t.type]}
+                      {typeLabels[t.type] || t.type}
                     </div>
                   </td>
                   <td className="py-4 px-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold capitalize ${statusStyles[t.status]}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold capitalize ${statusStyles[t.status] || ''}`}>
                       {t.status}
                     </span>
                   </td>
                   <td className="py-4 px-4 text-right text-sm text-cream tabular-nums">{formatNumber(t.total_streams)}</td>
                   <td className="py-4 px-4 text-right text-sm text-cream/70 tabular-nums">{formatNumber(t.unique_viewers)}</td>
-                  <td className="py-4 px-4 text-right text-sm text-cream/70 tabular-nums">{formatNumber(t.watch_hours)}</td>
-                  <td className="py-4 px-4"><CompletionBar value={t.avg_completion} /></td>
+                  <td className="py-4 px-4 text-right text-sm text-cream/70 tabular-nums">{formatNumber(Number(t.watch_hours))}</td>
+                  <td className="py-4 px-4"><CompletionBar value={Number(t.avg_completion)} /></td>
                   <td className="py-4 px-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase ${monetisationStyles[t.monetisation]}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase ${monetisationStyles[t.monetisation] || ''}`}>
                       {t.monetisation}
                     </span>
                   </td>

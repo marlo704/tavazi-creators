@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useAuthStore } from '../stores/authStore';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -12,7 +13,24 @@ export default function LoginPage() {
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const { signIn, resetPassword } = useAuth();
+  const { creatorProfile, profileError, loading: authLoading } = useAuthStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (authLoading || !creatorProfile) return;
+    if (creatorProfile.role === 'admin') {
+      navigate('/admin', { replace: true });
+    } else {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [creatorProfile, authLoading, navigate]);
+
+  useEffect(() => {
+    if (profileError && loading) {
+      setError(profileError);
+      setLoading(false);
+    }
+  }, [profileError, loading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +41,6 @@ export default function LoginPage() {
     if (authError) {
       setError(authError.message);
       setLoading(false);
-    } else {
-      navigate('/dashboard');
     }
   };
 

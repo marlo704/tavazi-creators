@@ -8,6 +8,8 @@ import {
   getSVODPool,
   getPayoutHistory,
   getAllCreators,
+  getAllTitlesCount,
+  getPlatformStats,
 } from '../lib/supabase';
 import { muvi } from '../lib/muvi';
 import { useAuthStore } from '../stores/authStore';
@@ -119,5 +121,27 @@ export function useMuviContents() {
     queryKey: ['muvi-contents'],
     queryFn: () => muvi.getContents(),
     staleTime: 60 * 60 * 1000,
+  });
+}
+
+export function useTitlesCount() {
+  return useQuery({
+    queryKey: ['titles-count'],
+    queryFn: async () => {
+      const { count, error } = await getAllTitlesCount();
+      if (error) throw error;
+      return count;
+    },
+  });
+}
+
+export function usePlatformStats() {
+  return useQuery({
+    queryKey: ['platform-stats'],
+    queryFn: async () => {
+      const { data, error } = await getPlatformStats();
+      if (error) throw error;
+      return data;
+    },
   });
 }
