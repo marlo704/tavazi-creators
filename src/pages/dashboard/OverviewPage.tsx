@@ -1,6 +1,7 @@
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download, Upload } from 'lucide-react';
 import KPICard from '../../components/dashboard/KPICard';
+import { useIsDemo } from '../../contexts/DemoContext';
 import {
   getCurrentCreator,
   getCreatorKPIs,
@@ -25,6 +26,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 };
 
 export default function OverviewPage() {
+  const isDemo = useIsDemo();
   const creator = getCurrentCreator();
   const kpis = getCreatorKPIs(creator.id);
   const metrics = getMetricsByCreator(creator.id);
@@ -64,16 +66,18 @@ export default function OverviewPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 border border-tavazi-navy/30 text-cream/60 rounded-lg text-sm hover:border-tavazi-navy hover:text-cream transition-all">
-            <Upload className="w-4 h-4" />
-            Import CSV
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-tavazi-navy text-tavazi-dark rounded-lg text-sm font-semibold hover:bg-[#339AF0] transition-all">
-            <Download className="w-4 h-4" />
-            Export Report
-          </button>
-        </div>
+        {!isDemo && (
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 px-4 py-2 border border-tavazi-navy/30 text-cream/60 rounded-lg text-sm hover:border-tavazi-navy hover:text-cream transition-all">
+              <Upload className="w-4 h-4" />
+              Import CSV
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2 bg-tavazi-navy text-tavazi-dark rounded-lg text-sm font-semibold hover:bg-[#339AF0] transition-all">
+              <Download className="w-4 h-4" />
+              Export Report
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">

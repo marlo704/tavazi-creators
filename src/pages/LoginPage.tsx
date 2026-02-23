@@ -146,6 +146,11 @@ export default function LoginPage() {
                 Not a creator yet? Apply to join &rarr;
               </Link>
             </div>
+            <div className="mt-3 text-center">
+              <Link to="/demo" className="text-xs text-cream/[0.7] hover:text-cream/90 transition-colors">
+                View Demo Dashboard
+              </Link>
+            </div>
           </>
         )}
       </div>

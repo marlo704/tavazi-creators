@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import AcceptInvitePage from './pages/AcceptInvitePage';
 import DashboardLayout from './components/dashboard/DashboardLayout';
+import DemoDashboardLayout from './components/dashboard/DemoDashboardLayout';
 import OverviewPage from './pages/dashboard/OverviewPage';
 import ContentPage from './pages/dashboard/ContentPage';
 import RevenuePage from './pages/dashboard/RevenuePage';
@@ -27,6 +28,12 @@ export default function App() {
           </ProtectedRoute>
         }
       >
+        <Route index element={<OverviewPage />} />
+        <Route path="content" element={<ContentPage />} />
+        <Route path="revenue" element={<RevenuePage />} />
+        <Route path="trend" element={<TrendPage />} />
+      </Route>
+      <Route path="/demo" element={<DemoDashboardLayout />}>
         <Route index element={<OverviewPage />} />
         <Route path="content" element={<ContentPage />} />
         <Route path="revenue" element={<RevenuePage />} />

@@ -1,5 +1,7 @@
-import { LogOut, FileText } from 'lucide-react';
+import { LogOut, FileText, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useIsDemo } from '../../contexts/DemoContext';
 import {
   getCurrentCreator,
   getTitlesByCreator,
@@ -28,6 +30,7 @@ function getMonthOptions() {
 
 export default function Topbar({ selectedMonth, onMonthChange }: TopbarProps) {
   const { signOut } = useAuth();
+  const isDemo = useIsDemo();
   const creator = getCurrentCreator();
   const months = getMonthOptions();
 
@@ -68,30 +71,50 @@ export default function Topbar({ selectedMonth, onMonthChange }: TopbarProps) {
       </select>
 
       <div className="flex items-center gap-3">
-        <button
-          onClick={handleExport}
-          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 border border-tavazi-navy/30 text-cream/60 rounded-lg text-xs hover:border-tavazi-navy hover:text-cream transition-all"
-          title="Export Report"
-        >
-          <FileText className="w-3.5 h-3.5" />
-          Export
-        </button>
-        <div className="flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center font-display text-xs text-tavazi-dark shrink-0"
-            style={{ background: 'linear-gradient(135deg, #D4A853, #C49B48)' }}
+        {!isDemo && (
+          <button
+            onClick={handleExport}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 border border-tavazi-navy/30 text-cream/60 rounded-lg text-xs hover:border-tavazi-navy hover:text-cream transition-all"
+            title="Export Report"
           >
-            {creator.avatar_initials}
+            <FileText className="w-3.5 h-3.5" />
+            Export
+          </button>
+        )}
+        {isDemo ? (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-tavazi-slate shrink-0">
+              <Eye className="w-4 h-4 text-cream/50" />
+            </div>
+            <span className="hidden md:block text-sm text-cream/60 font-medium">Demo Mode</span>
           </div>
-          <span className="hidden md:block text-sm text-cream font-medium">{creator.name}</span>
-        </div>
-        <button
-          onClick={signOut}
-          className="p-2 text-cream/40 hover:text-cream transition-colors rounded-lg hover:bg-tavazi-slate/50"
-          aria-label="Sign out"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center font-display text-xs text-tavazi-dark shrink-0"
+              style={{ background: 'linear-gradient(135deg, #D4A853, #C49B48)' }}
+            >
+              {creator.avatar_initials}
+            </div>
+            <span className="hidden md:block text-sm text-cream font-medium">{creator.name}</span>
+          </div>
+        )}
+        {isDemo ? (
+          <Link
+            to="/login"
+            className="px-3 py-1.5 bg-tavazi-navy text-tavazi-dark rounded-lg text-xs font-semibold hover:bg-[#339AF0] transition-all"
+          >
+            Sign In
+          </Link>
+        ) : (
+          <button
+            onClick={signOut}
+            className="p-2 text-cream/40 hover:text-cream transition-colors rounded-lg hover:bg-tavazi-slate/50"
+            aria-label="Sign out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </header>
   );

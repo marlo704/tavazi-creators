@@ -1,18 +1,21 @@
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Film, DollarSign, TrendingUp, Shield } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
-
-const navItems = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Overview', end: true },
-  { to: '/dashboard/content', icon: Film, label: 'Content', end: false },
-  { to: '/dashboard/revenue', icon: DollarSign, label: 'Revenue', end: false },
-  { to: '/dashboard/trend', icon: TrendingUp, label: 'Trend', end: false },
-];
+import { useIsDemo } from '../../contexts/DemoContext';
 
 const adminItem = { to: '/admin', icon: Shield, label: 'Admin', end: true };
 
 export default function Sidebar() {
   const { isAdmin } = useAuthStore();
+  const isDemo = useIsDemo();
+  const prefix = isDemo ? '/demo' : '/dashboard';
+
+  const navItems = [
+    { to: prefix, icon: LayoutDashboard, label: 'Overview', end: true },
+    { to: `${prefix}/content`, icon: Film, label: 'Content', end: false },
+    { to: `${prefix}/revenue`, icon: DollarSign, label: 'Revenue', end: false },
+    { to: `${prefix}/trend`, icon: TrendingUp, label: 'Trend', end: false },
+  ];
 
   return (
     <>
@@ -35,7 +38,7 @@ export default function Sidebar() {
               {item.label}
             </NavLink>
           ))}
-          {isAdmin && (
+          {!isDemo && isAdmin && (
             <NavLink
               to={adminItem.to}
               end={adminItem.end}
