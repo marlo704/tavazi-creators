@@ -1,17 +1,21 @@
-export default function DemoBanner() {
+import { forwardRef } from 'react';
+
+const DemoBanner = forwardRef<HTMLDivElement>(function DemoBanner(_props, ref) {
   return (
     <div
-      className="fixed top-[60px] left-0 right-0 z-30 flex flex-col items-center py-[10px] px-4 md:flex-row md:items-center md:justify-between md:py-0 md:px-6 md:h-[44px]"
+      ref={ref}
+      className="fixed top-0 left-0 right-0 z-[60] flex flex-col items-center py-[10px] px-4 md:flex-row md:items-center md:justify-between md:py-0 md:px-6 md:h-[44px]"
       style={{
         background: 'rgba(212,168,83,0.15)',
         borderBottom: '1px solid rgba(212,168,83,0.3)',
+        backdropFilter: 'blur(12px)',
       }}
     >
       <span
         className="whitespace-nowrap text-center md:text-left"
         style={{ fontSize: '13px', color: 'rgba(245,240,230,0.85)' }}
       >
-        Demo view — sample data only. Sign in to see your real earnings.
+        Demo view &mdash; sample data only. Sign in to see your real earnings.
       </span>
       <a
         href="https://tavazi.tv/creators"
@@ -33,4 +37,6 @@ export default function DemoBanner() {
       </a>
     </div>
   );
-}
+});
+
+export default DemoBanner;

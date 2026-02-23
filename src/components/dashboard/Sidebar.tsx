@@ -5,7 +5,7 @@ import { useIsDemo } from '../../contexts/DemoContext';
 
 const adminItem = { to: '/admin', icon: Shield, label: 'Admin', end: true };
 
-export default function Sidebar() {
+export default function Sidebar({ topOffset = 60 }: { topOffset?: number }) {
   const { isAdmin } = useAuthStore();
   const isDemo = useIsDemo();
   const prefix = isDemo ? '/demo' : '/dashboard';
@@ -19,7 +19,7 @@ export default function Sidebar() {
 
   return (
     <>
-      <aside className="hidden md:flex fixed left-0 top-[60px] bottom-0 w-[220px] bg-tavazi-dark flex-col py-4 border-r border-tavazi-navy/10 z-30">
+      <aside className="hidden md:flex fixed left-0 bottom-0 w-[220px] bg-tavazi-dark flex-col py-4 border-r border-tavazi-navy/10 z-30" style={{ top: topOffset }}>
         <nav className="flex flex-col gap-1 px-3">
           {navItems.map((item) => (
             <NavLink

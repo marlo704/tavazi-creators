@@ -15,6 +15,7 @@ import { openPrintReport } from '../../lib/exportReport';
 interface TopbarProps {
   selectedMonth: string;
   onMonthChange: (month: string) => void;
+  topOffset?: number;
 }
 
 function getMonthOptions() {
@@ -29,7 +30,7 @@ function getMonthOptions() {
   return options;
 }
 
-export default function Topbar({ selectedMonth, onMonthChange }: TopbarProps) {
+export default function Topbar({ selectedMonth, onMonthChange, topOffset = 0 }: TopbarProps) {
   const { signOut } = useAuth();
   const isDemo = useIsDemo();
   const { creatorProfile } = useAuthStore();
@@ -57,7 +58,7 @@ export default function Topbar({ selectedMonth, onMonthChange }: TopbarProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 h-[60px] bg-tavazi-charcoal border-b border-tavazi-navy/15 flex items-center justify-between px-4 md:px-6">
+    <header className="fixed left-0 right-0 z-40 h-[60px] bg-tavazi-charcoal border-b border-tavazi-navy/15 flex items-center justify-between px-4 md:px-6" style={{ top: topOffset }}>
       <div className="flex items-center gap-3">
         <img src="/assets/tavazi-logo.png" alt="Tavazi" className="h-9" />
         <span className="hidden sm:inline-block text-[10px] font-bold uppercase tracking-[0.15em] text-tavazi-navy bg-tavazi-navy/10 px-2 py-1 rounded">
