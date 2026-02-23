@@ -110,6 +110,7 @@ export default function CreatorManagementTab() {
   const [newEmail, setNewEmail] = useState('');
   const [newShare, setNewShare] = useState('65');
   const [creating, setCreating] = useState(false);
+  const [modalError, setModalError] = useState('');
 
   const fetchCreators = async () => {
     const { data } = await supabase
@@ -130,49 +131,30 @@ export default function CreatorManagementTab() {
     }
 
     setCreating(true);
-    const initials = newName
-      .split(' ')
-      .map((w) => w[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    setModalError('');
 
-    const { data: inviteData, error: inviteErr } = await supabase.auth.admin.inviteUserByEmail(
-      newEmail.trim()
-    );
-
-    if (inviteErr) {
-      toast.error('Invite failed: ' + inviteErr.message);
-      setCreating(false);
-      return;
-    }
-
-    const userId = inviteData?.user?.id;
-    if (!userId) {
-      toast.error('No user ID returned from invite');
-      setCreating(false);
-      return;
-    }
-
-    const { error: insertErr } = await supabase.from('creators').insert({
-      user_id: userId,
-      name: newName.trim(),
-      email: newEmail.trim(),
-      avatar_initials: initials,
-      revenue_share: parseFloat(newShare) / 100,
-      role: 'creator',
+    const { data, error } = await supabase.functions.invoke('invite-creator', {
+      body: {
+        email: newEmail.trim(),
+        name: newName.trim(),
+        revenue_share: parseFloat(newShare) / 100,
+      },
     });
 
-    if (insertErr) {
-      toast.error('Failed to create profile: ' + insertErr.message);
-    } else {
-      toast.success('Creator added and invite sent');
-      fetchCreators();
-      setShowModal(false);
-      setNewName('');
-      setNewEmail('');
-      setNewShare('65');
+    if (error || (data && data.error)) {
+      const msg = data?.error || error?.message || 'Failed to invite creator';
+      setModalError(msg);
+      setCreating(false);
+      return;
     }
+
+    toast.success(`Invite sent to ${newEmail.trim()}`);
+    fetchCreators();
+    setShowModal(false);
+    setNewName('');
+    setNewEmail('');
+    setNewShare('65');
+    setModalError('');
     setCreating(false);
   };
 
@@ -181,7 +163,7 @@ export default function CreatorManagementTab() {
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-display text-lg text-cream">All Creators</h3>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => { setShowModal(true); setModalError(''); }}
           className="flex items-center gap-2 px-4 py-2 bg-tavazi-navy text-tavazi-dark rounded-lg text-sm font-semibold hover:bg-[#339AF0] transition-all"
         >
           <Plus className="w-4 h-4" />
@@ -298,8 +280,11 @@ export default function CreatorManagementTab() {
                 disabled={creating}
                 className="w-full py-3 bg-tavazi-navy text-tavazi-dark font-semibold rounded-lg transition-all hover:bg-[#339AF0] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {creating ? 'Creating...' : 'Add Creator & Send Invite'}
+                {creating ? 'Sending Invite...' : 'Add Creator & Send Invite'}
               </button>
+              {modalError && (
+                <p className="text-red-400 text-sm mt-2">{modalError}</p>
+              )}
             </div>
           </div>
         </div>
