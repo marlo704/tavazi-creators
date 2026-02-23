@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
+import { useAuthStore } from '../../stores/authStore';
 
 interface CreatorRow {
   id: string;
@@ -102,6 +103,7 @@ function EditableShareCell({ creator, onSaved }: { creator: CreatorRow; onSaved:
 }
 
 export default function CreatorManagementTab() {
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const [creators, setCreators] = useState<CreatorRow[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [newName, setNewName] = useState('');
@@ -194,7 +196,7 @@ export default function CreatorManagementTab() {
               <th className="text-left py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-cream/50">Creator</th>
               <th className="text-left py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-cream/50">Email</th>
               <th className="text-center py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-cream/50">Revenue Share %</th>
-              <th className="text-center py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-cream/50">Role</th>
+              {isAdmin && <th className="text-center py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-cream/50">Role</th>}
               <th className="text-left py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-cream/50">Joined</th>
             </tr>
           </thead>
@@ -216,17 +218,19 @@ export default function CreatorManagementTab() {
                 <td className="py-4 px-4 text-center">
                   <EditableShareCell creator={c} onSaved={fetchCreators} />
                 </td>
-                <td className="py-4 px-4 text-center">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
-                      c.role === 'admin'
-                        ? 'bg-gold-accent/10 text-gold-accent'
-                        : 'bg-tavazi-navy/10 text-tavazi-navy'
-                    }`}
-                  >
-                    {c.role}
-                  </span>
-                </td>
+                {isAdmin && (
+                  <td className="py-4 px-4 text-center">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
+                        c.role === 'admin'
+                          ? 'bg-gold-accent/10 text-gold-accent'
+                          : 'bg-tavazi-navy/10 text-tavazi-navy'
+                      }`}
+                    >
+                      {c.role}
+                    </span>
+                  </td>
+                )}
                 <td className="py-4 px-4 text-sm text-cream/50">
                   {new Date(c.created_at).toLocaleDateString('en-GB', {
                     day: 'numeric',
