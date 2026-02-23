@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
+import AcceptInvitePage from './pages/AcceptInvitePage';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 import OverviewPage from './pages/dashboard/OverviewPage';
 import ContentPage from './pages/dashboard/ContentPage';
@@ -17,6 +18,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/accept-invite" element={<AcceptInvitePage />} />
       <Route
         path="/dashboard"
         element={
