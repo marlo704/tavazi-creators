@@ -33,7 +33,7 @@ const stats = [
 ];
 
 const tabs = [
-  { id: 'import', label: 'Import Analytics CSV' },
+  { id: 'import', label: 'Import Analytics' },
   { id: 'svod', label: 'SVOD Pool Entry' },
   { id: 'creators', label: 'Creator Management' },
 ] as const;
