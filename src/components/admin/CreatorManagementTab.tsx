@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
@@ -11,6 +11,94 @@ interface CreatorRow {
   role: string;
   created_at: string;
   avatar_initials: string;
+}
+
+function EditableShareCell({ creator, onSaved }: { creator: CreatorRow; onSaved: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(Math.round(creator.revenue_share * 100).toString());
+  const [flash, setFlash] = useState<'saved' | 'failed' | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setValue(Math.round(creator.revenue_share * 100).toString());
+  }, [creator.revenue_share]);
+
+  useEffect(() => {
+    if (editing) inputRef.current?.select();
+  }, [editing]);
+
+  const save = async () => {
+    setEditing(false);
+    const num = parseFloat(value);
+    if (isNaN(num) || num < 50 || num > 100) {
+      setValue(Math.round(creator.revenue_share * 100).toString());
+      return;
+    }
+
+    const share = num / 100;
+    if (share === creator.revenue_share) return;
+
+    const { error } = await supabase
+      .from('creators')
+      .update({ revenue_share: share })
+      .eq('id', creator.id);
+
+    if (error) {
+      setFlash('failed');
+      setValue(Math.round(creator.revenue_share * 100).toString());
+    } else {
+      setFlash('saved');
+      onSaved();
+    }
+    setTimeout(() => setFlash(null), 1500);
+  };
+
+  if (creator.role === 'admin') {
+    return <span className="text-cream/30 text-sm">&mdash;</span>;
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="number"
+        min={50}
+        max={100}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') save();
+          if (e.key === 'Escape') {
+            setValue(Math.round(creator.revenue_share * 100).toString());
+            setEditing(false);
+          }
+        }}
+        className="w-16 bg-tavazi-slate border border-tavazi-navy/40 rounded-full px-3 py-1 text-sm text-tavazi-navy text-center font-semibold focus:outline-none focus:ring-2 focus:ring-tavazi-navy/50"
+      />
+    );
+  }
+
+  return (
+    <span className="relative inline-flex items-center">
+      <button
+        onClick={() => setEditing(true)}
+        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-tavazi-navy/10 text-tavazi-navy cursor-pointer hover:bg-tavazi-navy/20 transition-colors"
+      >
+        {Math.round(creator.revenue_share * 100)}%
+      </button>
+      {flash === 'saved' && (
+        <span className="absolute -right-16 text-xs font-semibold text-green-400 animate-pulse whitespace-nowrap">
+          Saved ✓
+        </span>
+      )}
+      {flash === 'failed' && (
+        <span className="absolute -right-16 text-xs font-semibold text-red-400 animate-pulse whitespace-nowrap">
+          Failed
+        </span>
+      )}
+    </span>
+  );
 }
 
 export default function CreatorManagementTab() {
@@ -32,23 +120,6 @@ export default function CreatorManagementTab() {
   useEffect(() => {
     fetchCreators();
   }, []);
-
-  const handleShareUpdate = async (id: string, newValue: string) => {
-    const share = parseFloat(newValue) / 100;
-    if (isNaN(share) || share < 0 || share > 1) return;
-
-    const { error } = await supabase
-      .from('creators')
-      .update({ revenue_share: share })
-      .eq('id', id);
-
-    if (error) {
-      toast.error('Failed to update: ' + error.message);
-    } else {
-      toast.success('Revenue share updated');
-      fetchCreators();
-    }
-  };
 
   const handleAddCreator = async () => {
     if (!newName.trim() || !newEmail.trim()) {
@@ -143,14 +214,7 @@ export default function CreatorManagementTab() {
                 </td>
                 <td className="py-4 px-4 text-sm text-cream/60">{c.email}</td>
                 <td className="py-4 px-4 text-center">
-                  <input
-                    type="number"
-                    defaultValue={Math.round(c.revenue_share * 100)}
-                    min={0}
-                    max={100}
-                    onBlur={(e) => handleShareUpdate(c.id, e.target.value)}
-                    className="w-16 bg-tavazi-slate border border-tavazi-navy/20 rounded px-2 py-1 text-sm text-tavazi-navy text-center font-semibold focus:outline-none focus:ring-1 focus:ring-tavazi-navy/50"
-                  />
+                  <EditableShareCell creator={c} onSaved={fetchCreators} />
                 </td>
                 <td className="py-4 px-4 text-center">
                   <span
