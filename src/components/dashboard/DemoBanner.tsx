@@ -1,23 +1,36 @@
-import { Link } from 'react-router-dom';
-
 export default function DemoBanner() {
   return (
     <div
-      className="fixed top-[60px] left-0 right-0 z-30 flex items-center justify-between gap-4 px-4 md:px-6 py-2.5"
+      className="fixed top-[60px] left-0 right-0 z-30 flex flex-col items-center py-[10px] px-4 md:flex-row md:items-center md:justify-between md:py-0 md:px-6 md:h-[44px]"
       style={{
         background: 'rgba(212,168,83,0.15)',
         borderBottom: '1px solid rgba(212,168,83,0.3)',
       }}
     >
-      <p className="text-sm text-gold-accent/90 font-body leading-snug">
-        This is a demo view with sample data. Apply to join Tavazi to see your real earnings.
-      </p>
-      <Link
-        to="/"
-        className="shrink-0 px-4 py-1.5 bg-gold-accent text-tavazi-dark text-sm font-bold rounded-lg hover:bg-[#C49B48] transition-colors"
+      <span
+        className="whitespace-nowrap text-center md:text-left"
+        style={{ fontSize: '13px', color: 'rgba(245,240,230,0.85)' }}
       >
-        Apply to Join
-      </Link>
+        Demo view — sample data only. Sign in to see your real earnings.
+      </span>
+      <a
+        href="https://tavazi.tv/creators"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-2 md:mt-0 shrink-0 hover:opacity-90 transition-opacity"
+        style={{
+          background: '#D4A853',
+          color: '#0B1929',
+          fontWeight: 700,
+          fontSize: '12px',
+          padding: '6px 16px',
+          borderRadius: '4px',
+          border: 'none',
+          textDecoration: 'none',
+        }}
+      >
+        Apply to Join &rarr;
+      </a>
     </div>
   );
 }
