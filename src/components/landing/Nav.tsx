@@ -15,10 +15,9 @@ export default function Nav() {
     >
       <a href="https://tavazi.tv" className="relative z-10">
         <img
-          src="/assets/tavazi-logo-transparent.png"
+          src="/assets/tavazi-logo.png"
           alt="Tavazi"
-          className="h-[275px] md:h-[275px] h-[100px]"
-          style={{ marginTop: '-10px' }}
+          className="h-[48px]"
         />
       </a>
 
