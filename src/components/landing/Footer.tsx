@@ -3,7 +3,7 @@ export default function Footer() {
     <footer className="py-16 px-6 bg-tavazi-dark border-t border-cream/5">
       <div className="max-w-5xl mx-auto text-center">
         <img
-          src="/assets/tavazi-logo.png"
+          src="/assets/tavazi-logo-transparent.png"
           alt="Tavazi"
           className="h-[170px] mx-auto mb-4"
         />
